@@ -1,0 +1,21 @@
+# Local development stack. Cloud deployment uses Azure Database for PostgreSQL instead.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: billing-postgres
+    environment:
+      POSTGRES_DB: billing
+      POSTGRES_USER: billing
+      POSTGRES_PASSWORD: billing_local_pw   # local-only dev password
+    ports:
+      - "5433:5432"   # host 5433 to avoid clashing with a locally installed Postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U billing -d billing"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

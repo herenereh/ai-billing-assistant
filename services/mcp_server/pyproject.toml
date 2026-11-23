@@ -1,0 +1,22 @@
+[project]
+name = "billing-docs-mcp"
+version = "0.1.0"
+description = "MCP server exposing search over the Mobile Provider Billing Guide (SE4458 midterm, Group 2)"
+requires-python = ">=3.12"
+dependencies = [
+    "mcp>=1.9",
+    "rank-bm25>=0.2.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "anyio>=4.4",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
