@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import model_validator
+from pydantic import SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Local-development defaults only. They match docker-compose.yml and are not secrets.
@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     jwt_secret: str = LOCAL_JWT_SECRET
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60
+    gateway_secret: SecretStr | None = None   # set in the cloud: only the API Gateway sends it
 
     @model_validator(mode="after")
     def _no_dev_defaults_outside_local(self) -> "Settings":

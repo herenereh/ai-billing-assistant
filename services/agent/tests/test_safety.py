@@ -2,7 +2,7 @@
 
 import pytest
 
-from billing_agent.agent import BillingAgent
+from billing_agent.agent import MAX_TOOL_ROUNDS, BillingAgent
 from billing_agent.llm.base import LLMResponse, ToolCall
 from billing_agent.tools import TOOL_SPECS, ToolExecutor
 
@@ -156,7 +156,7 @@ async def test_tool_loop_is_bounded(api, fake_docs):
     await api.login("5551001", "pw1")
     reply = await BillingAgent(Loops(), ToolExecutor(api, fake_docs, "5551001")).handle("hi")
     assert "couldn't complete" in reply.text
-    assert len(reply.trace) == 4
+    assert len(reply.trace) == MAX_TOOL_ROUNDS  # a provider that ignores 'no tools' is still stopped
 
 
 async def test_non_finite_amount_from_llm_is_rejected(api, fake_docs, fake_api):

@@ -23,7 +23,8 @@ TODAY = date(2026, 11, 22)
         ("April 2025 bill", (4, 2025)),
         ("my bill in may", (5, 2026)),
         ("May I pay part of my bill?", None),        # 'may' as a verb is not a month
-        ("this month", (11, 2026)),
+        ("this month", (10, 2026)),                # running month has no bill yet → latest bill
+        ("Why is my internet charge higher this month?", (10, 2026)),
         ("last month's bill", (10, 2026)),
         ("Ekim faturam ne kadar?", (10, 2026)),
         ("ekimdeki fatura", (10, 2026)),

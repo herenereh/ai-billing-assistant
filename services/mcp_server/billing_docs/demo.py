@@ -9,7 +9,6 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
-from datetime import UTC, datetime
 from pathlib import Path
 
 from mcp import Client
@@ -44,7 +43,6 @@ def to_markdown(url: str, results: list[dict]) -> str:
         "",
         f"- Server: `{url}`",
         f"- Tool: `{TOOL}`",
-        f"- Run at: {datetime.now(UTC).isoformat(timespec='seconds')}",
         "",
     ]
     for i, data in enumerate(results, 1):

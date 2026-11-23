@@ -42,25 +42,24 @@ def default_period(today: date) -> tuple[int, int]:
 def parse_period(text: str, today: date) -> tuple[int, int] | None:
     """Find a billing period in free text. Returns None when no month is mentioned."""
     lower = text.lower()
+    if any(p in lower for p in ("this month", "bu ay", "my latest bill", "my last bill", "son fatura")):
+        # The running month has no bill yet; "this month's bill" means the latest issued bill.
+        return default_period(today)
+    if any(p in lower for p in ("last month", "previous month", "geçen ay", "gecen ay")):
+        return previous_period(today.month, today.year)
     month = None
-    if any(p in lower for p in ("this month", "bu ay")):
-        month = today.month
-    elif any(p in lower for p in ("last month", "previous month", "geçen ay", "gecen ay")):
-        month, year = previous_period(today.month, today.year)
-        return month, year
-    else:
-        words = _WORD.findall(lower)
-        for i, word in enumerate(words):
-            # Turkish suffixes: "ekim'deki", "ekimdeki" → match on prefix for Turkish names
-            candidate = _ALIASES.get(word) or next(
-                (n for name, n in _ALIASES.items() if len(name) >= 4 and word.startswith(name)), None
-            )
-            if candidate is None:
-                continue
-            if word == "may" and not _is_month_may(words, i):
-                continue
-            month = candidate
-            break
+    words = _WORD.findall(lower)
+    for i, word in enumerate(words):
+        # Turkish suffixes: "ekim'deki", "ekimdeki" → match on prefix for Turkish names
+        candidate = _ALIASES.get(word) or next(
+            (n for name, n in _ALIASES.items() if len(name) >= 4 and word.startswith(name)), None
+        )
+        if candidate is None:
+            continue
+        if word == "may" and not _is_month_may(words, i):
+            continue
+        month = candidate
+        break
     if month is None:
         return None
     year_match = _YEAR.search(lower)

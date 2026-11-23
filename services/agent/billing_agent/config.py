@@ -16,4 +16,4 @@ class AgentSettings(BaseSettings):
     llm_provider: str = "rule-based"           # "rule-based" (no LLM, free) or "gemini"
     gemini_api_key: SecretStr | None = None    # from Google AI Studio; keep it in .env only
     gemini_model: str = "gemini-3.5-flash-lite"
-    http_timeout_seconds: float = 15.0
+    http_timeout_seconds: float = 45.0         # cloud apps scale to zero; a cold start takes ~20-30 s

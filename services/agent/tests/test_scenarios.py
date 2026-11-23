@@ -63,3 +63,11 @@ async def test_turkish_conversation_routes_the_same(agent, fake_docs):
     assert pay.awaiting_confirmation
     done = await agent.handle("evet")
     assert done.text.startswith("Payment successful")
+
+
+async def test_assignment_example_internet_charge_this_month(agent):
+    # The assignment's illustrative chat: "Why is my internet charge higher this month?"
+    reply = await agent.handle("Why is my internet charge higher this month?")
+    assert [t.tool for t in reply.trace] == ["query_bill_detailed", "query_bill_detailed", "search_billing_documentation"]
+    assert reply.trace[0].arguments == {"month": 10, "year": 2026}   # latest issued bill, not the running month
+    assert "35 GB" in reply.text and "15 GB over 20 GB" in reply.text and "$70.00" in reply.text

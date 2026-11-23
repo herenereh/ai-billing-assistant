@@ -200,3 +200,14 @@ async def test_free_tier_rate_limit_message(make_agent):
     )
     reply = await agent.handle("How much does extra internet cost?")
     assert "rate limit reached (free tier)" in reply.text
+
+
+async def test_last_round_offers_no_tools_so_the_model_must_answer(make_agent):
+    from billing_agent.agent import MAX_TOOL_ROUNDS
+    searches = [model_turn(call("search_billing_documentation", {"query": f"q{i}"}, f"c{i}"))
+                for i in range(MAX_TOOL_ROUNDS - 1)]
+    agent, fake, _ = make_agent(*searches, model_turn(text("Final answer from what was found.")))
+    reply = await agent.handle("Why is my bill higher?")
+    assert reply.text == "Final answer from what was found."
+    assert fake.requests[-1]["config"].tools is None
+    assert all(r["config"].tools for r in fake.requests[:-1])

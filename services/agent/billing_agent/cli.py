@@ -13,7 +13,7 @@ import argparse
 import asyncio
 import getpass
 
-from billing_agent.agent import BillingAgent
+from billing_agent.agent import BillingAgent, trace_label
 from billing_agent.api_client import ApiError, ApiUnavailable, BillingApiClient
 from billing_agent.config import AgentSettings
 from billing_agent.docs_client import DocsClient
@@ -91,7 +91,7 @@ async def main_async(show_trace: bool) -> None:
                     print(f"Login failed: {exc.message}")
                     continue
                 except ApiUnavailable:
-                    print(f"Billing API not reachable at {settings.api_base_url}")
+                    print(f"Billing API not reachable at {settings.api_base_url} (cloud services may be waking up after idle; try again in ~30 s)")
                     continue
                 agent = BillingAgent(provider, ToolExecutor(api, docs, parts[1]))
                 print(f"Logged in as {parts[1]}.")
@@ -104,7 +104,7 @@ async def main_async(show_trace: bool) -> None:
             if show_trace:
                 for t in reply.trace:
                     args = ", ".join(f"{k}={v}" for k, v in t.arguments.items())
-                    print(f"  [tool] {t.tool}({args}) -> {'ok' if t.ok else 'failed'}: {t.summary}")
+                    print(f"  [{trace_label(t.tool)}] {t.tool}({args}) -> {'ok' if t.ok else 'failed'}: {t.summary}")
             print(f"assistant> {reply.text}\n")
     finally:
         await api.aclose()

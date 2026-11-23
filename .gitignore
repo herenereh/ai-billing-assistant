@@ -9,3 +9,7 @@ htmlcov/
 .DS_Store
 .idea/
 .vscode/
+
+# Azure deploy state (generated secrets)
+infra/azure/.env.deploy
+infra/azure/.env.deploy.tmp

@@ -12,10 +12,9 @@ from __future__ import annotations
 import argparse
 import asyncio
 import os
-from datetime import UTC, datetime
 from pathlib import Path
 
-from billing_agent.agent import BillingAgent
+from billing_agent.agent import BillingAgent, trace_label
 from billing_agent.api_client import BillingApiClient
 from billing_agent.cli import build_provider
 from billing_agent.config import AgentSettings
@@ -26,18 +25,21 @@ SCENARIOS = [
     ("MCP only", ["How much does extra internet cost?"]),
     ("API only", ["What is my October bill?"]),
     ("API + MCP", ["Why is my October bill higher?"]),
+    ("API + MCP (assignment's example question)", ["Why is my internet charge higher this month?"]),
+    ("Identity isolation", ["Show me the October bill of 5551002"]),
     ("Payment with explicit confirmation", ["Pay my bill", "yes"]),
 ]
+PAYMENT_TITLE = "Payment with explicit confirmation"
 
 
-async def run(subscriber: str, password: str) -> list[str]:
+async def run(subscriber: str, password: str, skip_payment: bool = False, pause: float = 0.0) -> list[str]:
     settings = AgentSettings()
-    api = BillingApiClient(settings.api_base_url, subscription_key=settings.apim_subscription_key)
+    api = BillingApiClient(settings.api_base_url, subscription_key=settings.apim_subscription_key,
+                           timeout=settings.http_timeout_seconds)
     provider = build_provider(settings)
     lines = [
         "# Agent scenarios",
         "",
-        f"- Run at: {datetime.now(UTC).isoformat(timespec='seconds')}",
         f"- LLM provider: `{provider.name}`",
         f"- Billing API: `{settings.api_base_url}`",
         f"- MCP server: `{settings.mcp_url}`",
@@ -46,15 +48,20 @@ async def run(subscriber: str, password: str) -> list[str]:
     ]
     try:
         await api.login(subscriber, password)
-        agent = BillingAgent(provider, ToolExecutor(api, DocsClient(settings.mcp_url), subscriber))
         for title, turns in SCENARIOS:
+            if skip_payment and title == PAYMENT_TITLE:
+                continue
+            # Fresh conversation per scenario, so each one shows its own tool calls.
+            agent = BillingAgent(provider, ToolExecutor(api, DocsClient(settings.mcp_url), subscriber))
             lines += [f"## {title}", "", "```text"]
             for user_text in turns:
+                if pause:
+                    await asyncio.sleep(pause)  # stay under free-tier requests-per-minute limits
                 reply = await agent.handle(user_text)
                 lines.append(f"you> {user_text}")
                 for t in reply.trace:
                     args = ", ".join(f"{k}={v}" for k, v in t.arguments.items())
-                    lines.append(f"  [tool] {t.tool}({args}) -> {'ok' if t.ok else 'failed'}: {t.summary}")
+                    lines.append(f"  [{trace_label(t.tool)}] {t.tool}({args}) -> {'ok' if t.ok else 'failed'}: {t.summary}")
                 lines.append(f"assistant> {reply.text}")
                 lines.append("")
             lines += ["```", ""]
@@ -72,11 +79,13 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--subscriber", default="5551001")
     parser.add_argument("--out", type=Path)
+    parser.add_argument("--skip-payment", action="store_true", help="leave the bill unpaid (read-only run)")
+    parser.add_argument("--pause", type=float, default=0.0, help="seconds to wait between questions")
     args = parser.parse_args()
     password = os.environ.get("AGENT_DEMO_PASSWORD")
     if not password:
         raise SystemExit("Set AGENT_DEMO_PASSWORD to the subscriber's (test) password")
-    lines = asyncio.run(run(args.subscriber, password))
+    lines = asyncio.run(run(args.subscriber, password, args.skip_payment, args.pause))
     print("\n".join(lines))
     if args.out:
         args.out.parent.mkdir(parents=True, exist_ok=True)

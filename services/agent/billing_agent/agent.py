@@ -16,7 +16,7 @@ from billing_agent.periods import default_period, period_label
 from billing_agent.prompts import build_system_prompt
 from billing_agent.tools import TOOL_SPECS, PendingPayment, ToolExecutor
 
-MAX_TOOL_ROUNDS = 4
+MAX_TOOL_ROUNDS = 6  # model calls per user turn; the last one is offered no tools, so it must answer
 _YES = {"yes", "y", "confirm", "confirmed", "i confirm", "yes please", "yes pay", "evet", "onaylıyorum", "onayla"}
 _NO = {"no", "n", "cancel", "stop", "don't", "dont", "hayır", "hayir", "iptal", "vazgeç", "vazgec"}
 
@@ -78,9 +78,10 @@ class BillingAgent:
         system = build_system_prompt(ctx, period_label(*default_period(ctx.today)))
         trace: list[TraceEntry] = []
 
-        for _ in range(MAX_TOOL_ROUNDS):
+        for round_no in range(MAX_TOOL_ROUNDS):
+            tools = TOOL_SPECS if round_no < MAX_TOOL_ROUNDS - 1 else []
             try:
-                response = await self.provider.complete(system, self.messages, TOOL_SPECS, ctx)
+                response = await self.provider.complete(system, self.messages, tools, ctx)
             except LLMUnavailable as exc:
                 self.messages.pop()  # forget the unanswered user turn so history stays valid
                 return AgentReply(notice + f"The assistant is unavailable right now ({exc}). Please try again.", trace)
@@ -139,6 +140,11 @@ class BillingAgent:
         self.messages.append({"role": "user", "content": user_text})
         self.messages.append({"role": "assistant", "content": text})
         return AgentReply(text)
+
+
+def trace_label(tool: str) -> str:
+    """Where a tool call goes, as in the assignment's architecture diagram."""
+    return "MCP" if tool == "search_billing_documentation" else "REST via Gateway"
 
 
 def _confirmation_prompt(p: PendingPayment) -> str:

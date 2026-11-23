@@ -93,7 +93,7 @@ class GeminiProvider:
     ) -> LLMResponse:
         config = types.GenerateContentConfig(
             system_instruction=system,
-            tools=cast(types.ToolListUnion, self.to_tools(tools)),
+            tools=cast(types.ToolListUnion, self.to_tools(tools)) if tools else None,
             automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
             max_output_tokens=self._max_output_tokens,
         )

@@ -26,7 +26,7 @@ _PAY = re.compile(
 )
 _WHY = re.compile(r"\bwhy\b|\bneden\b|\bniye\b|\bhigher\b|\bexpensive\b|yüksek|\bexplain\b|açıkla")
 _PERSONAL = re.compile(r"\bmy\b|\bmine\b|\bme\b|faturam|benim")
-_BILL = re.compile(r"\bbill|\binvoice|fatura")
+_BILL = re.compile(r"\bbill|\binvoice|\bcharge|fatura|ücret")
 _DETAIL = re.compile(r"\bdetail|\bbreakdown\b|\busage\b|\bused\b|\bminutes\b|kullanım|detay")
 _AMOUNT = re.compile(r"\$\s?(\d+(?:\.\d{1,2})?)|(\d+(?:\.\d{1,2})?)\s?(?:\$|usd\b|dollars?\b|dolar\b)")
 _SUBSCRIBER_NO = re.compile(r"\b\d{7,12}\b")

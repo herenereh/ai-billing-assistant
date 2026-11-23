@@ -1,8 +1,7 @@
 # MCP retrieval demo
 
-- Server: `http://127.0.0.1:8001/mcp`
+- Server: `https://ca-billing-mcp.nicedune-430dff91.polandcentral.azurecontainerapps.io/mcp`
 - Tool: `search_billing_documentation`
-- Run at: 2026-11-22T14:18:58+00:00
 
 ## Query 1: “How much does extra internet cost?”
 
